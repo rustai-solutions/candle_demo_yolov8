@@ -1,4 +1,15 @@
-# candle-yolo-v8: Object Detection and Pose Estimation
+
+# candle-yolo-v8
+
+```bash
+cargo run --release -- assets/football.jpg
+# or
+cargo run --release -- assets/football.jpg --task pose
+```
+
+
+
+## candle-yolo-v8: Object Detection and Pose Estimation
 
 This is a port of [Ultralytics
 YOLOv8](https://github.com/ultralytics/ultralytics). The implementation is based
