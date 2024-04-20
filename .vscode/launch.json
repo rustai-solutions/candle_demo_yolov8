@@ -7,24 +7,6 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "candle_demo_yolov8_test",
-            "cargo": {
-                "args": [
-                    "build",
-                    "--bin=candle_demo_yolov8",
-                    "--package=candle_demo_yolov8"
-                ],
-                "filter": {
-                    "name": "candle_demo_yolov8",
-                    "kind": "bin"
-                }
-            },
-            "args": ["assets/football.jpg","--task", "pose","--model","../models/yolov8m-pose.onnx"],
-            "cwd": "${workspaceFolder}"
-        },
-        {
-            "type": "lldb",
-            "request": "launch",
             "name": "candle_demo_yolov8_pose",
             "cargo": {
                 "args": [
