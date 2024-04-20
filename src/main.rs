@@ -6,10 +6,8 @@
 
 mod model;
 use model::{Multiples, YoloV8, YoloV8Pose};
-mod coco_classes;
 
-use candle_core::utils::{cuda_is_available, metal_is_available};
-use candle_core::{DType, Device, IndexOp, Result, Tensor};
+use candle::{DType, Device, IndexOp, Result, Tensor};
 use candle_nn::{Module, VarBuilder};
 use candle_transformers::object_detection::{non_maximum_suppression, Bbox, KeyPoint};
 use clap::{Parser, ValueEnum};
@@ -53,28 +51,6 @@ const KP_CONNECTIONS: [(usize, usize); 16] = [
 ];
 // Model architecture from https://github.com/ultralytics/ultralytics/issues/189
 // https://github.com/tinygrad/tinygrad/blob/master/examples/yolov8.py
-
-pub fn get_device(cpu: bool) -> Result<Device> {
-    if cpu {
-        Ok(Device::Cpu)
-    } else if cuda_is_available() {
-        Ok(Device::new_cuda(0)?)
-    } else if metal_is_available() {
-        Ok(Device::new_metal(0)?)
-    } else {
-        #[cfg(all(target_os = "macos", target_arch = "aarch64"))]
-        {
-            println!(
-                "Running on CPU, to run on GPU(metal), build this example with `--features metal`"
-            );
-        }
-        #[cfg(not(all(target_os = "macos", target_arch = "aarch64")))]
-        {
-            println!("Running on CPU, to run on GPU, build this example with `--features cuda`");
-        }
-        Ok(Device::Cpu)
-    }
-}
 
 pub fn report_detect(
     pred: &Tensor,
@@ -123,10 +99,14 @@ pub fn report_detect(
     let h_ratio = initial_h as f32 / h as f32;
     let mut img = img.to_rgb8();
     let font = Vec::from(include_bytes!("roboto-mono-stripped.ttf") as &[u8]);
-    let font = rusttype::Font::try_from_vec(font);
+    let font = ab_glyph::FontRef::try_from_slice(&font).map_err(candle::Error::wrap)?;
     for (class_index, bboxes_for_class) in bboxes.iter().enumerate() {
         for b in bboxes_for_class.iter() {
-            println!("{}: {:?}", coco_classes::NAMES[class_index], b);
+            println!(
+                "{}: {:?}",
+                candle_demo_yolov8::coco_classes::NAMES[class_index],
+                b
+            );
             let xmin = (b.xmin * w_ratio) as i32;
             let ymin = (b.ymin * h_ratio) as i32;
             let dx = (b.xmax - b.xmin) * w_ratio;
@@ -139,27 +119,28 @@ pub fn report_detect(
                 );
             }
             if legend_size > 0 {
-                if let Some(font) = font.as_ref() {
-                    imageproc::drawing::draw_filled_rect_mut(
-                        &mut img,
-                        imageproc::rect::Rect::at(xmin, ymin).of_size(dx as u32, legend_size),
-                        image::Rgb([170, 0, 0]),
-                    );
-                    let legend = format!(
-                        "{}   {:.0}%",
-                        coco_classes::NAMES[class_index],
-                        100. * b.confidence
-                    );
-                    imageproc::drawing::draw_text_mut(
-                        &mut img,
-                        image::Rgb([255, 255, 255]),
-                        xmin,
-                        ymin,
-                        rusttype::Scale::uniform(legend_size as f32 - 1.),
-                        font,
-                        &legend,
-                    )
-                }
+                imageproc::drawing::draw_filled_rect_mut(
+                    &mut img,
+                    imageproc::rect::Rect::at(xmin, ymin).of_size(dx as u32, legend_size),
+                    image::Rgb([170, 0, 0]),
+                );
+                let legend = format!(
+                    "{}   {:.0}%",
+                    candle_demo_yolov8::coco_classes::NAMES[class_index],
+                    100. * b.confidence
+                );
+                imageproc::drawing::draw_text_mut(
+                    &mut img,
+                    image::Rgb([255, 255, 255]),
+                    xmin,
+                    ymin,
+                    ab_glyph::PxScale {
+                        x: legend_size as f32 - 1.,
+                        y: legend_size as f32 - 1.,
+                    },
+                    &font,
+                    &legend,
+                )
             }
         }
     }
@@ -177,7 +158,7 @@ pub fn report_pose(
     let pred = pred.to_device(&Device::Cpu)?;
     let (pred_size, npreds) = pred.dims2()?;
     if pred_size != 17 * 3 + 4 + 1 {
-        candle_core::bail!("unexpected pred-size {pred_size}");
+        candle::bail!("unexpected pred-size {pred_size}");
     }
     let mut bboxes = vec![];
     // Extract the bounding boxes for which confidence is above the threshold.
@@ -393,7 +374,7 @@ impl Task for YoloV8Pose {
 }
 
 pub fn run<T: Task>(args: Args) -> anyhow::Result<()> {
-    let device = get_device(args.cpu)?;
+    let device=candle_demo_yolov8::device(args.cpu)?;
     // Create the model and load the weights from the file.
     let multiples = match args.which {
         Which::N => Multiples::n(),
@@ -411,7 +392,7 @@ pub fn run<T: Task>(args: Args) -> anyhow::Result<()> {
         let mut image_name = std::path::PathBuf::from(image_name);
         let original_image = image::io::Reader::open(&image_name)?
             .decode()
-            .map_err(candle_core::Error::wrap)?;
+            .map_err(candle::Error::wrap)?;
         let (width, height) = {
             let w = original_image.width() as usize;
             let h = original_image.height() as usize;

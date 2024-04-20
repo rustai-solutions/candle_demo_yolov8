@@ -1,0 +1,63 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "candle_demo_yolov8_pose",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--bin=candle_demo_yolov8",
+                    "--package=candle_demo_yolov8"
+                ],
+                "filter": {
+                    "name": "candle_demo_yolov8",
+                    "kind": "bin"
+                }
+            },
+            "args": ["assets/football.jpg","--task", "pose","--model","../models/yolov8s-pose.safetensors"],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "candle_demo_yolov8",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--bin=candle_demo_yolov8",
+                    "--package=candle_demo_yolov8"
+                ],
+                "filter": {
+                    "name": "candle_demo_yolov8",
+                    "kind": "bin"
+                }
+            },
+            "args": ["assets/bike.jpg","--model","../models/yolov8s.safetensors"],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in executable 'candle_demo_yolov8'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--bin=candle_demo_yolov8",
+                    "--package=candle_demo_yolov8"
+                ],
+                "filter": {
+                    "name": "candle_demo_yolov8",
+                    "kind": "bin"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        }
+    ]
+}
