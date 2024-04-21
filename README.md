@@ -1,6 +1,16 @@
 
 # candle-yolo-v8
 
+## run use local model
+
+```sh
+cargo run /assets/football.jpg --task pose --model ../models/yolov8s-pose.safetensors 
+```
+
+## run use remote model
+
+maybe, you need mirror
+
 ```bash
 cargo run --release -- assets/football.jpg
 # or
