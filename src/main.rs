@@ -190,7 +190,7 @@ pub fn report_pose(
     non_maximum_suppression(&mut bboxes, nms_threshold);
     let bboxes = &bboxes[0];
     let font = Vec::from(include_bytes!("roboto-mono-stripped.ttf") as &[u8]);
-    let font = ab_glyph::FontRef::try_from_slice(&font).map_err(candle::Error::wrap)?;
+    let font: ab_glyph::FontRef = ab_glyph::FontRef::try_from_slice(&font).map_err(candle::Error::wrap)?;
 
     // Annotate the original image and print boxes information.
     let (initial_h, initial_w) = (img.height(), img.width());
@@ -211,7 +211,7 @@ pub fn report_pose(
             );
 
             let legend = format!(
-                "{}:{:.0}%",
+                "{}:{:.2}%",
                 candle_demo_yolov8::coco_classes::NAMES[0],//just input1
                 100. * b.confidence
             );
@@ -221,7 +221,7 @@ pub fn report_pose(
                 xmin,
                 ymin,
                 ab_glyph::PxScale {
-                    x: (legend_size as f32)*2.0 - 1.,
+                    x: (legend_size as f32),
                     y: (legend_size as f32)*2.0 - 10.,
                 },
                 &font,
