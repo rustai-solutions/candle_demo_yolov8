@@ -4,7 +4,7 @@
 ## run use local model
 
 ```sh
-cargo run /assets/football.jpg --task pose --model ../models/yolov8s-pose.safetensors 
+cargo run assets/football.jpg --task pose --model ../models/yolov8s-pose.safetensors 
 ```
 
 ## run use remote model
