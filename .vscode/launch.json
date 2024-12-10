@@ -19,7 +19,7 @@
                     "kind": "bin"
                 }
             },
-            "args": ["assets/football.jpg","--task", "pose","--model","../models/yolov8s-pose.safetensors"],
+            "args": ["assets/bus.jpg","--task", "pose","--model","../models/yolov8s-pose.safetensors"],
             "cwd": "${workspaceFolder}"
         },
         {

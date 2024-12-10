@@ -154,6 +154,7 @@ pub fn report_pose(
     h: usize,
     confidence_threshold: f32,
     nms_threshold: f32,
+    legend_size:u32
 ) -> Result<DynamicImage> {
     let pred = pred.to_device(&Device::Cpu)?;
     let (pred_size, npreds) = pred.dims2()?;
@@ -188,6 +189,8 @@ pub fn report_pose(
     let mut bboxes = vec![bboxes];
     non_maximum_suppression(&mut bboxes, nms_threshold);
     let bboxes = &bboxes[0];
+    let font = Vec::from(include_bytes!("roboto-mono-stripped.ttf") as &[u8]);
+    let font: ab_glyph::FontRef = ab_glyph::FontRef::try_from_slice(&font).map_err(candle::Error::wrap)?;
 
     // Annotate the original image and print boxes information.
     let (initial_h, initial_w) = (img.height(), img.width());
@@ -206,6 +209,25 @@ pub fn report_pose(
                 imageproc::rect::Rect::at(xmin, ymin).of_size(dx as u32, dy as u32),
                 image::Rgb([255, 0, 0]),
             );
+
+            let legend = format!(
+                "{}:{:.2}%",
+                candle_demo_yolov8::coco_classes::NAMES[0],//just input1
+                100. * b.confidence
+            );
+            imageproc::drawing::draw_text_mut(
+                &mut img,
+                image::Rgb([255, 255, 255]),
+                xmin,
+                ymin,
+                ab_glyph::PxScale {
+                    x: (legend_size as f32),
+                    y: (legend_size as f32)*2.0 - 10.,
+                },
+                &font,
+                &legend,
+            )
+
         }
         for kp in b.data.iter() {
             if kp.mask < 0.6 {
@@ -367,9 +389,10 @@ impl Task for YoloV8Pose {
         h: usize,
         confidence_threshold: f32,
         nms_threshold: f32,
-        _legend_size: u32,
+        legend_size: u32,
     ) -> Result<DynamicImage> {
-        report_pose(pred, img, w, h, confidence_threshold, nms_threshold)
+        //TODO:youngday:0422: add detect to pose
+        report_pose(pred, img.clone(), w, h, confidence_threshold, nms_threshold,legend_size)
     }
 }
 
